@@ -1,0 +1,8 @@
+- ingresar id del paciente
+- resaltar ruido por movimiento
+- pausar, detener adquisición
+- pausar, detener grabación
+- guardar grabación
+- cargar grabación
+- linea de tiempo, ubicarse en la grabación
+- exportar grabación a correo (?)
