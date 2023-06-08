@@ -1,8 +1,8 @@
-- ingresar id del paciente
+- ingresar DATOS del paciente
 - resaltar ruido por movimiento
 - pausar, detener adquisición
 - pausar, detener grabación
-- guardar grabación
-- cargar grabación
+- guardar grabación (ENVIADO DIRECTAMENTE AL CORREO en .mat :p) --> PACS xdd
+- cargar grabación (si se puede directamente de una listbox que contenga los nombres de los archivos guardados)
 - linea de tiempo, ubicarse en la grabación
-- exportar grabación a correo (?)
+- marco rojo de low transparency para indicar que en esa zona existe ruido debido a movimientos identificados por el MPU
