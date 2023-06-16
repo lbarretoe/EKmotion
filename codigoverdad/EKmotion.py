@@ -43,8 +43,8 @@ class EKmotionApp(tk.Tk):
         # pantalla inicio
         self.frame = tk.Frame(self,bg=self.b_bg, width=self.width, height=self.height)
         self.frame.pack(ipady=0)
-        self.port = 'COM13'   # '/dev/ttyS0'  # puerto serial del ESP32 conectado al Raspberry Pi
-        self.baud_rate = 115200
+        self.port = 'COM15'   # '/dev/ttyS0'  # puerto serial del ESP32 conectado al Raspberry Pi
+        self.baud_rate = 9600
         self.data_bits = serial.EIGHTBITS  # número de bits de datos
         self.parity = serial.PARITY_NONE  # tipo de paridad
         self.stop_bits = serial.STOPBITS_ONE  # número de bits de parada
@@ -124,8 +124,6 @@ class EKmotionApp(tk.Tk):
         self.time_sc.grid(row=4, column=0, columnspan=8)
         self.time_sc.config(state=tk.DISABLED)
 
-
-    
     def handle_mail(self):
         pass
         
@@ -273,7 +271,6 @@ class EKmotionApp(tk.Tk):
         self.recording = False
 
     def update_plot(self):
-        
         if self.recording:
             if self.ser.in_waiting > 0:
                 data = self.ser.readline()
@@ -289,8 +286,6 @@ class EKmotionApp(tk.Tk):
                 self.ecg_values.append(value)
                 self.times.append(self.t)
 
-                
-            
                 # Actualiza los datos del gráfico
                 self.line.set_data(self.times, self.ecg_values)
                 
@@ -300,10 +295,7 @@ class EKmotionApp(tk.Tk):
 
                     xllim = 0 if xllim < 0 else xllim
                     self.ecg_plot.set_xlim(xllim, max(self.times))
-                    if len(self.ecg_values) > 50:
-                        self.ecg_plot.set_ylim(min(self.ecg_values[:-50]), max(self.ecg_values[:-50]))
-                    else:
-                        self.ecg_plot.set_ylim(min(self.ecg_values), max(self.ecg_values))
+                    self.ecg_plot.set_ylim(min(self.ecg_values), max(self.ecg_values))
                 
                 # Actualiza el canvas
                 self.canvas.draw()

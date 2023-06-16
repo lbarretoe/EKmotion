@@ -3,9 +3,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import numpy as np
 import time
-import scipy
+from scipy.io import loadmat, savemat
 import os
-from mail import send_mail
+# from mail import send_mail
 
 
 class EKmotionApp(tk.Tk):
@@ -23,18 +23,17 @@ class EKmotionApp(tk.Tk):
         
         # tiempo 
         self.max_time = self.t
-        self.view_width = 5;
+        self.view_width = 5
         # vars
         self.scale_time = tk.IntVar()
         self.scale_time.set(0)
         self.bpm_var = tk.StringVar()
         self.bpm_var.set("--")
-        self.patient_entries_lst = ["Nombre", "ID", "Edad", "Sexo", "BP_num", "BP_den", "Altura", "Peso", "Condicion", "Medicacion"]
+        self.patient_entries_lst = ["DNI", "Edad", "Sexo", "BP_num", "BP_den", "Altura", "Peso", "Condicion", "Medicacion"]
         self.patient_data = {k:tk.StringVar() for k in self.patient_entries_lst}
         for key in self.patient_data:
             self.patient_data[key].set("--")
-        self.patient_data["Nombre"].set("Paciente")
-        self.patient_data["ID"].set("001")
+        self.patient_data["DNI"].set("71396698")
         self.ecg_values = []
         self.times = []
         # pantalla inicio
@@ -101,11 +100,9 @@ class EKmotionApp(tk.Tk):
         # labels
         self.bpm_l = tk.Label(self.label_frame, bg=self.b_bg, textvariable=self.bpm_var, font=("Arial", 15))
         self.bpmt_l = tk.Label(self.label_frame, bg=self.b_bg, text="BPM", font=("Arial", 15))
-        self.user_name = tk.Label(self.label_frame, bg=self.b_bg, textvariable=self.patient_data["Nombre"])
-        self.user_id = tk.Label(self.label_frame, bg=self.b_bg, textvariable=self.patient_data["ID"])
+        self.user_id = tk.Label(self.label_frame, bg=self.b_bg, textvariable=self.patient_data["DNI"])
         self.bpm_l.pack(side=tk.TOP)
         self.bpmt_l.pack(side=tk.TOP)
-        self.user_name.pack(side=tk.TOP)
         self.user_id.pack(side=tk.TOP)
         
         self.time_sc = tk.Scale(self.frame, from_=0, to=0, orient=tk.HORIZONTAL,bg=self.b_bg ,length=400, variable=self.scale_time, command=self.update_scale)
@@ -114,8 +111,6 @@ class EKmotionApp(tk.Tk):
 
     def handle_mail(self):
         pass
-        
-
 
     def pat_data_window(self):
         self.frame.destroy()
@@ -125,7 +120,7 @@ class EKmotionApp(tk.Tk):
         f = ("Arial", 12)
         yp = 25
         xp = 18
-        count = 0;
+        count = 0
         for key in self.patient_data.keys():
             if count == 4:
                 self.bpframe1 = tk.Frame(self.frame,bg=self.b_bg)
@@ -183,7 +178,7 @@ class EKmotionApp(tk.Tk):
         file_path = os.path.join(self.sv_file_prefix, self.t_entry.get() + ".mat")
         os.makedirs(self.sv_file_prefix, exist_ok=True)
         encoded_data = {key: value.encode('utf-8') if isinstance(value, str) else value for key, value in self.patient_dict.items()}
-        scipy.io.savemat(file_path, encoded_data)
+        savemat(file_path, encoded_data)
         self.top.destroy()
 
 
@@ -217,7 +212,7 @@ class EKmotionApp(tk.Tk):
         if selected_index:
             selected_file = file_listbox.get(selected_index)
             file_path = os.path.join(self.sv_file_prefix, selected_file)
-            data = scipy.io.loadmat(file_path)
+            data = loadmat(file_path)
             print(f"Archivo cargado: {selected_file}")
             print(data)
 
@@ -297,6 +292,7 @@ class EKmotionApp(tk.Tk):
 
             # Programa la próxima actualización
             self.after(10, self.update_plot) 
+
 if __name__ == "__main__":
     app = EKmotionApp()
     app.mainloop()
