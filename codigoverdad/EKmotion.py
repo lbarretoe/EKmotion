@@ -44,7 +44,7 @@ class EKmotionApp(tk.Tk):
         self.frame = tk.Frame(self,bg=self.b_bg, width=self.width, height=self.height)
         self.frame.pack(ipady=0)
         self.port = 'COM13'   # '/dev/ttyS0'  # puerto serial del ESP32 conectado al Raspberry Pi
-        self.baud_rate = 9600
+        self.baud_rate = 115200
         self.data_bits = serial.EIGHTBITS  # número de bits de datos
         self.parity = serial.PARITY_NONE  # tipo de paridad
         self.stop_bits = serial.STOPBITS_ONE  # número de bits de parada
@@ -305,13 +305,16 @@ class EKmotionApp(tk.Tk):
 
                     xllim = 0 if xllim < 0 else xllim
                     self.ecg_plot.set_xlim(xllim, max(self.times))
-                    self.ecg_plot.set_ylim(min(self.ecg_values), max(self.ecg_values))
+                    if len(self.ecg_values) > 50:
+                        self.ecg_plot.set_ylim(min(self.ecg_values[:-50]), max(self.ecg_values[:-50]))
+                    else:
+                        self.ecg_plot.set_ylim(min(self.ecg_values), max(self.ecg_values))
                 
                 # Actualiza el canvas
                 self.canvas.draw()
 
                 # Programa la próxima actualización
-                self.after(10, self.update_plot) 
+                self.after(1, self.update_plot) 
 if __name__ == "__main__":
     app = EKmotionApp()
     app.mainloop()
