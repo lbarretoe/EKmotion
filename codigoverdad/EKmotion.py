@@ -3,6 +3,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import numpy as np
 import time
+import scipy
+import os
+from mail import send_mail
 
 
 class EKmotionApp(tk.Tk):
@@ -14,7 +17,7 @@ class EKmotionApp(tk.Tk):
         self.geometry(f"{self.width}x{self.height}")
         self.b_bg = "#FFFFFF"
         self.configure(bg=self.b_bg)
-
+        self.sv_file_prefix = "./saves/"
         # Inicialización del tiempo
         self.t = 0
         
@@ -26,7 +29,7 @@ class EKmotionApp(tk.Tk):
         self.scale_time.set(0)
         self.bpm_var = tk.StringVar()
         self.bpm_var.set("--")
-        self.patient_entries_lst = ["Nombre", "ID", "Edad", "Sexo", "BP_num", "BP_den", "Altura", "Peso", "Condición", "Medicación"]
+        self.patient_entries_lst = ["Nombre", "ID", "Edad", "Sexo", "BP_num", "BP_den", "Altura", "Peso", "Condicion", "Medicacion"]
         self.patient_data = {k:tk.StringVar() for k in self.patient_entries_lst}
         for key in self.patient_data:
             self.patient_data[key].set("--")
@@ -82,17 +85,19 @@ class EKmotionApp(tk.Tk):
         self.stop_button.pack(side=tk.RIGHT, padx=10)  # 
         self.rec_f.pack(side=tk.TOP)
         
-        self.ac_b = tk.Button(self.button_frame, text="Iniciar adquisición", command=self.start_acquisition)
-        self.ac_b.pack(side=tk.TOP)  # 
+        self.ac_b = tk.Button(self.button_frame, text="Iniciar adquisición", command=self.start_acquisition, width=15)
+        self.ac_b.pack(side=tk.TOP, pady=6)  # 
 
-        self.s_ac_b = tk.Button(self.button_frame, text="Pausar adquisición", command=self.stop_acquisition)
-        self.s_ac_b.pack(side=tk.TOP)  # 
-        self.data_b = tk.Button(self.button_frame, text="Ingresar datos", command=self.pat_data_window)
-        self.data_b.pack(side=tk.TOP)  # 
-        self.save_b = tk.Button(self.button_frame, text="Guardar", command=self.save)
-        self.save_b.pack(side=tk.TOP)  # 
-        self.load_b = tk.Button(self.button_frame, text="Cargar", command=self.load)
-        self.load_b.pack(side=tk.TOP)  # 
+        self.s_ac_b = tk.Button(self.button_frame, text="Pausar adquisición", command=self.stop_acquisition, width=15)
+        self.s_ac_b.pack(side=tk.TOP, pady=6)  # 
+        self.data_b = tk.Button(self.button_frame, text="Ingresar datos", command=self.pat_data_window, width=15)
+        self.data_b.pack(side=tk.TOP, pady=6)  # 
+        self.save_b = tk.Button(self.button_frame, text="Guardar", command=self.save_win, width=15)
+        self.save_b.pack(side=tk.TOP, pady=6)  # 
+        self.load_b = tk.Button(self.button_frame, text="Cargar", command=self.load_win, width=15)
+        self.load_b.pack(side=tk.TOP, pady=6)
+        self.send_mail_b = tk.Button(self.button_frame, text="Enviar mail", command=self.handle_mail, width=15)
+        self.send_mail_b.pack(side=tk.TOP, pady=6)  # 
         # labels
         self.bpm_l = tk.Label(self.label_frame, bg=self.b_bg, textvariable=self.bpm_var, font=("Arial", 15))
         self.bpmt_l = tk.Label(self.label_frame, bg=self.b_bg, text="BPM", font=("Arial", 15))
@@ -106,6 +111,11 @@ class EKmotionApp(tk.Tk):
         self.time_sc = tk.Scale(self.frame, from_=0, to=0, orient=tk.HORIZONTAL,bg=self.b_bg ,length=400, variable=self.scale_time, command=self.update_scale)
         self.time_sc.grid(row=4, column=0, columnspan=8)
         self.time_sc.config(state=tk.DISABLED)
+
+    def handle_mail(self):
+        pass
+        
+
 
     def pat_data_window(self):
         self.frame.destroy()
@@ -149,12 +159,67 @@ class EKmotionApp(tk.Tk):
         for key, value in self.patient_data_el.items():
             if value[1].get() != "":
                 self.patient_data[key].set(value[1].get())
+    
+    def save_win(self):
+        self.top = tk.Toplevel(self)
+        self.top.geometry("300x200")
+        t_name = tk.Label(self.top, width=25, text="Nombre de archivo:")
+        t_name.pack(side=tk.TOP, pady=20)
+        self.t_entry = tk.Entry(self.top, width=25)
+        self.t_entry.pack(side=tk.TOP, pady=20)
+        t_conf_b = tk.Button(self.top, width=25,text="Confirmar", command=self.handle_save)
+        t_conf_b.pack(side=tk.TOP, pady=20)
+        
 
-    def save(self):
-        pass
+    def handle_save(self):
+        if self.t_entry.get() == "":
+            return
+        
+        self.patient_dict = {
+            "patient_data": {k:v.get() for (k, v) in self.patient_data.items()},
+            "data": np.array(self.ecg_values),
+            "time": np.array(self.times)
+        }
+        file_path = os.path.join(self.sv_file_prefix, self.t_entry.get() + ".mat")
+        os.makedirs(self.sv_file_prefix, exist_ok=True)
+        encoded_data = {key: value.encode('utf-8') if isinstance(value, str) else value for key, value in self.patient_dict.items()}
+        scipy.io.savemat(file_path, encoded_data)
+        self.top.destroy()
 
-    def load(self):
-        pass
+
+
+    def load_win(self):
+        # Obtener la carpeta seleccionada
+        folder_path = self.sv_file_prefix
+
+        # Crear una ventana emergente
+        popup = tk.Toplevel(self)
+        popup.title("Seleccionar Archivo")
+
+        # Crear el Listbox
+        file_listbox = tk.Listbox(popup, selectmode="single")
+        file_listbox.pack()
+
+        # Obtener los nombres de los archivos de la carpeta
+        file_names = os.listdir(folder_path)
+
+        # Agregar los nombres de los archivos al Listbox
+        for file_name in file_names:
+            file_listbox.insert("end", file_name)
+
+
+        # Botón para cargar el archivo seleccionado
+        load_button = tk.Button(popup, text="Cargar", command=lambda: self.handle_load(file_listbox))
+        load_button.pack()
+    
+    def handle_load(self, file_listbox):
+        selected_index = file_listbox.curselection()
+        if selected_index:
+            selected_file = file_listbox.get(selected_index)
+            file_path = os.path.join(self.sv_file_prefix, selected_file)
+            data = scipy.io.loadmat(file_path)
+            print(f"Archivo cargado: {selected_file}")
+            print(data)
 
     
     def start_acquisition(self):
