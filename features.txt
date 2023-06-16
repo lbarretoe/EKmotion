@@ -1,8 +1,8 @@
-- ingresar DATOS del paciente
-- resaltar ruido por movimiento
-- pausar, detener adquisición
-- pausar, detener grabación
-- guardar grabación (ENVIADO DIRECTAMENTE AL CORREO en .mat :p) --> PACS xdd
-- cargar grabación (si se puede directamente de una listbox que contenga los nombres de los archivos guardados)
-- linea de tiempo, ubicarse en la grabación
+- ingresar DATOS del paciente (solo ingresar el DNI, no el nombre para proteger los datos y para el sexo solo M F o ND en check)
+- pausar, detener adquisición (si se pausa tiene que establecer cuanto tiempo se ha pausado y señalar donde se ha pausado)
+- send mail (ENVIADO DIRECTAMENTE AL CORREO en el formato más optimo) --> PACS xdd
+- guardar grabación (en el formato más optimo para poder cargarla)
+- cargar grabación (desde una listbox que contenga los nombres de los archivos guardados)
 - marco rojo de low transparency para indicar que en esa zona existe ruido debido a movimientos identificados por el MPU
+- En la presion, colocar if para q no sean valores imposibles, es decir, un rango normal
+- Agregar un cuadro de texto para poder ingresar el segundo donde queremos ubicarnos en la grabación
