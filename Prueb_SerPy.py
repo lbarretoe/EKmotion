@@ -8,8 +8,12 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import struct
 
+PORT = 'COM15'
+BAUDIOS = 9600
+
+
 class serialPlot:
-    def __init__(self, serialPort = 'COM15', serialBaud = 9600, plotLength = 100, dataNumBytes = 2):
+    def __init__(self, serialPort = PORT, serialBaud = BAUDIOS, plotLength = 100, dataNumBytes = 2):
         self.port = serialPort
         self.baud = serialBaud
         self.plotMaxLength = plotLength
@@ -67,9 +71,8 @@ class serialPlot:
 
 
 def main():
-    # portName = 'COM5'     # for windows users
-    portName = 'COM15'
-    baudRate = 9600
+    portName = PORT
+    baudRate = BAUDIOS
     maxPlotLength = 100
     dataNumBytes = 4        # number of bytes of 1 data point
     s = serialPlot(portName, baudRate, maxPlotLength, dataNumBytes)   # initializes all required variables
@@ -97,7 +100,6 @@ def main():
     plt.show()
 
     s.close()
-
 
 if __name__ == '__main__':
     main()
