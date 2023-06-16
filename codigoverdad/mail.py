@@ -1,25 +1,58 @@
-import base64
+import smtplib,ssl
+from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from requests import HTTPError
+from email.mime.base import MIMEBase
+from email import encoders
 
-def send_mail(to, subject, body):
-    SCOPES = [
-        "https://www.googleapis.com/auth/gmail.send"
-    ]
-    flow = InstalledAppFlow.from_client_secrets_file('./codigoverdad/credentials.json', SCOPES)
-    creds = flow.run_local_server(port=0)
+port = 465  # For SSL
+smtp_server = "smtp.gmail.com"
+sender_email = "ekmotion2023@gmail.com"  #address
+password = "yxdawgmgjwfqpwjn"
 
-    service = build('gmail', 'v1', credentials=creds)
-    message = MIMEText(body)
-    message['to'] = to
-    message['subject'] = subject
-    create_message = {'raw': base64.urlsafe_b64encode(message.as_bytes()).decode()}
+def emailverify(sendto, message):
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server: #as server
+        try:
+            server.login(sender_email, password)
+            server.sendmail(sender_email, sendto, message)
+        except Exception as error:
+            print(error)
 
-    try:
-        message = (service.users().messages().send(userId="me", body=create_message).execute())
-        print(F'sent message to {message} Message Id: {message["id"]}')
-    except HTTPError as error:
-        print(F'An error occurred: {error}')
-        message = None
+def emailverify2(sendto, message, attachment_path:str):
+    context = ssl.create_default_context()
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        try:
+            server.login(sender_email, password)
+            
+            # Create a multipart message and set headers
+            email_message = MIMEMultipart()
+            email_message["From"] = sender_email
+            email_message["To"] = sendto
+            email_message["Subject"] = "Email Verification"
+            
+            # Attach the message content
+            email_message.attach(MIMEText(message, "plain"))
+            
+            # Attach the file
+            with open(attachment_path, "rb") as attachment_file:
+                part = MIMEBase("application", "octet-stream")
+                part.set_payload(attachment_file.read())
+            
+            encoders.encode_base64(part)
+            part.add_header(
+                "Content-Disposition",
+                f"attachment; filename= {attachment_path.split('/')[-1]}",
+            )
+            email_message.attach(part)
+            
+            # Send the email
+            server.send_message(email_message)
+        except Exception as error:
+            print(error)
+
+# Usage example
+sendto = "edu.marin.vera@gmail.com"
+message = "Hello, please verify your email."
+attachment_path = "./saves/pac1.mat"
+
+emailverify2(sendto, message, attachment_path)

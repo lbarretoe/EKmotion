@@ -5,8 +5,11 @@ import numpy as np
 import time
 import scipy
 import os
-from mail import send_mail
+import serial
 
+
+# tiempo manual
+# ejes, grid, 
 
 class EKmotionApp(tk.Tk):
     def __init__(self):
@@ -40,6 +43,15 @@ class EKmotionApp(tk.Tk):
         # pantalla inicio
         self.frame = tk.Frame(self,bg=self.b_bg, width=self.width, height=self.height)
         self.frame.pack(ipady=0)
+        self.port = 'COM13'   # '/dev/ttyS0'  # puerto serial del ESP32 conectado al Raspberry Pi
+        self.baud_rate = 9600
+        self.data_bits = serial.EIGHTBITS  # número de bits de datos
+        self.parity = serial.PARITY_NONE  # tipo de paridad
+        self.stop_bits = serial.STOPBITS_ONE  # número de bits de parada
+
+        # Abre el puerto serial. 
+        self.ser = serial.Serial(self.port, self.baud_rate, self.data_bits, self.parity, self.stop_bits)
+
         self.main_window()
         
 
@@ -112,6 +124,8 @@ class EKmotionApp(tk.Tk):
         self.time_sc.grid(row=4, column=0, columnspan=8)
         self.time_sc.config(state=tk.DISABLED)
 
+
+    
     def handle_mail(self):
         pass
         
@@ -266,37 +280,38 @@ class EKmotionApp(tk.Tk):
     def update_plot(self):
         
         if self.recording:
-            self.t = time.time() - self.start_time
-            
-            if self.t > self.max_time:
-                self.max_time = self.t
-                self.time_sc.config(to=self.max_time)
-            self.scale_time.set(int(self.t))
-            
-            # Genera el valor de la onda sinusoidal
-            value = np.sin(2 * np.pi * 1 * (self.t))
-            # Agrega el valor y el tiempo a las listas
-            self.ecg_values.append(value)
-            self.times.append(self.t)
+            if self.ser.in_waiting > 0:
+                data = self.ser.readline()
+                value = float(data.decode('utf-8').strip())
+                self.t = time.time() - self.start_time
+                
+                if self.t > self.max_time:
+                    self.max_time = self.t
+                    self.time_sc.config(to=self.max_time)
+                self.scale_time.set(int(self.t))
+                
+                # Agrega el valor y el tiempo a las listas
+                self.ecg_values.append(value)
+                self.times.append(self.t)
 
+                
             
-        
-            # Actualiza los datos del gráfico
-            self.line.set_data(self.times, self.ecg_values)
-            
-            # Ajusta los límites del gráfico si hay más de un punto
-            if len(self.times) > 1 and len(self.ecg_values) > 1:
-                xllim = max(self.times) - self.view_width 
+                # Actualiza los datos del gráfico
+                self.line.set_data(self.times, self.ecg_values)
+                
+                # Ajusta los límites del gráfico si hay más de un punto
+                if len(self.times) > 1 and len(self.ecg_values) > 1:
+                    xllim = max(self.times) - self.view_width 
 
-                xllim = 0 if xllim < 0 else xllim
-                self.ecg_plot.set_xlim(xllim, max(self.times))
-                self.ecg_plot.set_ylim(min(self.ecg_values), max(self.ecg_values))
-            
-            # Actualiza el canvas
-            self.canvas.draw()
+                    xllim = 0 if xllim < 0 else xllim
+                    self.ecg_plot.set_xlim(xllim, max(self.times))
+                    self.ecg_plot.set_ylim(min(self.ecg_values), max(self.ecg_values))
+                
+                # Actualiza el canvas
+                self.canvas.draw()
 
-            # Programa la próxima actualización
-            self.after(10, self.update_plot) 
+                # Programa la próxima actualización
+                self.after(10, self.update_plot) 
 if __name__ == "__main__":
     app = EKmotionApp()
     app.mainloop()
