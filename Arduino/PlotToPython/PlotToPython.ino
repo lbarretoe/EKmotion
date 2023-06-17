@@ -9,7 +9,7 @@ void setup() {
 void loop() {
   timeSync(loopTime);
   //int val = analogRead(0) - 512;
-  double val = (analogRead(0) - 512) / 512.0;
+  double val = (analogRead(A0)-512.0)/512.0;
   sendToPC(&val);
 }
 
