@@ -38,8 +38,8 @@ class EKmotionApp(tk.Tk):
         self.queue = queue.Queue()
         
         self.title("ECG Monitor")
-        self.width = 800
-        self.height = 400
+        self.width = 1600
+        self.height = 900
         self.geometry(f"{self.width}x{self.height}")
         self.b_bg = "#FFFFFF"
         self.configure(bg=self.b_bg)
@@ -88,7 +88,7 @@ class EKmotionApp(tk.Tk):
         self.label_frame.grid(row=3, column=8, rowspan=2)
 
         # Configurando plot
-        self.fig = Figure(figsize=(6, 3), dpi=100, facecolor=self.b_bg)
+        self.fig = Figure(figsize=(10, 5), dpi=100, facecolor=self.b_bg)
         self.ax = self.fig.add_subplot(111)
         self.graph = FigureCanvasTkAgg(self.fig, master=self.plot_frame)
         self.graph.get_tk_widget().pack(side="top", fill='both', expand=True)
@@ -97,7 +97,7 @@ class EKmotionApp(tk.Tk):
         self.thread.start()
 
         self.data = []
-        self.ani = animation.FuncAnimation(self.fig, self.animate, interval=10)
+        self.ani = animation.FuncAnimation(self.fig, self.animate, interval=1)
 
         # Botones
         # frame grabacion
@@ -284,12 +284,10 @@ class EKmotionApp(tk.Tk):
                     try:
                         self.data.append(float(data_str))
                         self.t = time.time() - self.start_time
-            
                         if self.t > self.max_time:
                             self.max_time = self.t
                             self.time_sc.config(to=self.max_time)
                         self.scale_time.set(int(self.t))
-                        
                         if len(self.data) > 200:  # Limit data array length
                             self.data.pop(0)
                     except ValueError:

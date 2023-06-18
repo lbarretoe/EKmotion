@@ -33,7 +33,7 @@ void setup() {
 
 void loop() {
   float sensor = analogRead(SENSOR);
-  float voltage = (sensor / 4095.0) * 3300.0;
+  float voltage = (sensor / 4095.0) * 1.1;
   
   if((digitalRead(32) == 1)||(digitalRead(33) == 1)){
     return;
@@ -53,7 +53,7 @@ void loop() {
       //Serial.print(",");
       Serial.println(voltage);
   }
-  
+  /*
   if (voltage > threshold) {
     unsigned long currentBeatTime = millis();
     unsigned long beatPeriod = currentBeatTime - lastBeatTime;
@@ -62,7 +62,7 @@ void loop() {
     float beatRate = 60.0 / (beatPeriod / 1000.0);
     Serial.println("BPM: " + String(beatRate));
   }
-
+  */
   //Wait for a bit to keep serial data from saturating
   
   delay(10);
