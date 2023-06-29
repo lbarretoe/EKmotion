@@ -3,7 +3,6 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import numpy as np
 import time
-import scipy
 import os
 import serial
 import threading
@@ -16,19 +15,24 @@ class SerialThread(threading.Thread):
         self.queue = queue
 
     def run(self):
-        s = serial.Serial('COM7', 115200)
+        s = serial.Serial('/dev/ttyUSB0', 115200)
         s.reset_input_buffer()
 
         last_value = 0
+        last_value2 = 60
+        last_value3 = 0
         while True:
             data = s.readline().decode().strip()
             if data:
                 try:
-                    last_value = float(data)
-                    self.queue.put(last_value)
+                    data_lst = data.split(",")
+                    last_value = float(data_lst[0])
+                    last_value2 = float(data_lst[1])
+                    last_value3 = float(data_lst[2])
+                    self.queue.put((last_value, last_value2, last_value3))
                 except ValueError:
                     # If we cannot convert data to float, put the last valid value instead
-                    self.queue.put(last_value)
+                    self.queue.put((last_value, last_value2, last_value3))
 # tiempo manual
 # ejes, grid, 
 
@@ -36,10 +40,10 @@ class EKmotionApp(tk.Tk):
     def __init__(self):
         super().__init__()
         self.queue = queue.Queue()
-        
+        self.Fs = 600
         self.title("ECG Monitor")
-        self.width = 1600
-        self.height = 900
+        self.width = 800
+        self.height = 400
         self.geometry(f"{self.width}x{self.height}")
         self.b_bg = "#FFFFFF"
         self.configure(bg=self.b_bg)
@@ -88,8 +92,9 @@ class EKmotionApp(tk.Tk):
         self.label_frame.grid(row=3, column=8, rowspan=2)
 
         # Configurando plot
-        self.fig = Figure(figsize=(10, 5), dpi=100, facecolor=self.b_bg)
+        self.fig = Figure(figsize=(6, 3), dpi=100, facecolor=self.b_bg)
         self.ax = self.fig.add_subplot(111)
+        self.ax.grid(True)
         self.graph = FigureCanvasTkAgg(self.fig, master=self.plot_frame)
         self.graph.get_tk_widget().pack(side="top", fill='both', expand=True)
 
@@ -97,7 +102,7 @@ class EKmotionApp(tk.Tk):
         self.thread.start()
 
         self.data = []
-        self.ani = animation.FuncAnimation(self.fig, self.animate, interval=1)
+        self.ani = animation.FuncAnimation(self.fig, self.animate, interval=(1/self.Fs)*1000, cache_frame_data=False)
 
         # Botones
         # frame grabacion
@@ -206,7 +211,7 @@ class EKmotionApp(tk.Tk):
         file_path = os.path.join(self.sv_file_prefix, self.t_entry.get() + ".mat")
         os.makedirs(self.sv_file_prefix, exist_ok=True)
         encoded_data = {key: value.encode('utf-8') if isinstance(value, str) else value for key, value in self.patient_dict.items()}
-        scipy.io.savemat(file_path, encoded_data)
+
         self.top.destroy()
 
     def load_win(self):
@@ -238,9 +243,7 @@ class EKmotionApp(tk.Tk):
         if selected_index:
             selected_file = file_listbox.get(selected_index)
             file_path = os.path.join(self.sv_file_prefix, selected_file)
-            data = scipy.io.loadmat(file_path)
             print(f"Archivo cargado: {selected_file}")
-            print(data)
     
     def start_acquisition(self):
         pass
@@ -264,7 +267,7 @@ class EKmotionApp(tk.Tk):
     def start_recording(self):
         if not self.recording:
             self.recording = True
-            
+            self.it_count = 0
             self.scale_time.set(int(self.max_time))
             self.time_sc.config(state=tk.DISABLED)
             
@@ -277,12 +280,17 @@ class EKmotionApp(tk.Tk):
 
     def animate(self, i):
         if self.recording:
-            self.bpm_var.set(np.random.choice(["79", "80", "82", "83"]))
             while self.queue.qsize():
                 try:
                     data_str = self.queue.get()
+                    val = data_str[0]
+                    bpm = data_str[1]
+                    mpu = data_str[2]
                     try:
-                        self.data.append(float(data_str))
+                        self.data.append(float(val))
+                        self.bpm_var.set(str(bpm))
+                        if self.it_count < 200:
+                            self.it_count +=1
                         self.t = time.time() - self.start_time
                         if self.t > self.max_time:
                             self.max_time = self.t
@@ -295,7 +303,8 @@ class EKmotionApp(tk.Tk):
                 except queue.Empty:
                     pass
             self.ax.clear()
-            self.ax.plot(self.data)
+            self.ax.grid(True) 
+            self.ax.plot(np.linspace(self.max_time - self.it_count*1/self.Fs, self.max_time, self.it_count), self.data)
 
 if __name__ == "__main__":
     app = EKmotionApp()
