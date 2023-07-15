@@ -12,7 +12,7 @@ class SerialThread(threading.Thread):
         self.queue = queue
 
     def run(self):
-        s = serial.Serial('COM7', 115200)
+        s = serial.Serial('COM14', 115200)
         s.reset_input_buffer()
 
         last_value = 0

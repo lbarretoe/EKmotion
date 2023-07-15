@@ -21,7 +21,7 @@ def emailverify(sendto: str, message: str, attachment_path: str):
             email_message = MIMEMultipart()
             email_message["From"] = sender_email
             email_message["To"] = sendto
-            email_message["Subject"] = "Email Verification"
+            email_message["Subject"] = "Datos del paciente"
 
             # Attach the message content
             email_message.attach(MIMEText(message, "plain"))
@@ -43,10 +43,3 @@ def emailverify(sendto: str, message: str, attachment_path: str):
         except Exception as error:
             print(error)
 
-
-# Usage example
-sendto = "edu.marin.vera@gmail.com"
-message = "Este es tu señal ECG, - Diego."
-attachment_path = "./saves/pac1.json"
-
-emailverify(sendto, message, attachment_path)
