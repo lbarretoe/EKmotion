@@ -85,6 +85,7 @@ class SerialPlotter(QtWidgets.QMainWindow):
         self.timer = QtCore.QTimer()
         
         self.prev_mpu = 0
+        self.current_mpu = 0
 
         self.play_b.clicked.connect(self.play)
         self.pause_b.clicked.connect(self.pause)
@@ -101,6 +102,9 @@ class SerialPlotter(QtWidgets.QMainWindow):
         self.buffer_index = 0
 
         self.timer.start(3)
+        self.timer_mpu = QtCore.QTimer()
+        self.timer_mpu.timeout.connect(self.update_mpu)
+        self.timer_mpu.start(500)
 
     def mail_dialog(self):
         self.mail_d = MailDialog()
@@ -267,16 +271,20 @@ class SerialPlotter(QtWidgets.QMainWindow):
                         
                     self.data[:-1] = self.data[1:]
                     self.data[-1] = number
+                    self.current_mpu  = int(vals[2])
                     
-                    if self.prev_mpu == 0 and int(vals[2]) == 1:
-                        self.pen = pg.mkPen(color=(255, 0, 0))
-                    if self.prev_mpu == 1 and int(vals[2]) == 0:
-                        self.pen = pg.mkPen(color=(0, 0, 255))
                     self.curve.setData(self.time, self.data, pen=self.pen)
                     self.bpm_edit.setText(vals[1])
-                    self.prev_mpu = int(vals[2])
                 except ValueError:
                     pass
+
+    def update_mpu(self):
+        if self.prev_mpu == 0 and self.current_mpu == 1:
+            self.pen = pg.mkPen(color=(255, 0, 0))
+        if self.prev_mpu == 1 and self.current_mpu == 0:
+            self.pen = pg.mkPen(color=(0, 0, 255))
+        
+        self.prev_mpu = self.current_mpu
 
 class Node:
     def __init__(self, data=None):
