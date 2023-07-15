@@ -95,7 +95,12 @@ class SerialPlotter(QtWidgets.QMainWindow):
         self.mail_b.clicked.connect(self.mail_dialog)
         self.timer.timeout.connect(self.update)
         self.selected_file = ""
-        self.timer.start(5)
+
+        self.buffer = np.zeros(self.plot_length)
+        self.buffer_time = np.zeros(self.plot_length)
+        self.buffer_index = 0
+
+        self.timer.start(50)
 
     def mail_dialog(self):
         self.mail_d = MailDialog()
@@ -249,28 +254,29 @@ class SerialPlotter(QtWidgets.QMainWindow):
 
 
     def update(self):
-        line = self.serial_port.readline().decode()
-        if self.recording:
-            try:
-                vals = line.split(",")
-                number = float(vals[0])
-                if self.is_saving:
-                    self.data_rec.EnQueue(self.data[0])
-                    if self.data_rec.size > 10000:
-                        self.data_rec.DeQueue()
+        while self.serial_port.in_waiting:
+            line = self.serial_port.readline().decode()
+            if self.recording:
+                try:
+                    vals = line.split(",")
+                    number = float(vals[0])
+                    if self.is_saving:
+                        self.data_rec.EnQueue(self.data[0])
+                        if self.data_rec.size > 10000:
+                            self.data_rec.DeQueue()
+                        
+                    self.data[:-1] = self.data[1:]
+                    self.data[-1] = number
                     
-                self.data[:-1] = self.data[1:]
-                self.data[-1] = number
-                
-                if self.prev_mpu == 0 and int(vals[2]) == 1:
-                    self.pen = pg.mkPen(color=(255, 0, 0))
-                if self.prev_mpu == 1 and int(vals[2]) == 0:
-                    self.pen = pg.mkPen(color=(0, 0, 255))
-                self.curve.setData(self.time, self.data, pen=self.pen)
-                self.bpm_edit.setText(vals[1])
-                self.prev_mpu = int(vals[2])
-            except ValueError:
-                pass
+                    if self.prev_mpu == 0 and int(vals[2]) == 1:
+                        self.pen = pg.mkPen(color=(255, 0, 0))
+                    if self.prev_mpu == 1 and int(vals[2]) == 0:
+                        self.pen = pg.mkPen(color=(0, 0, 255))
+                    self.curve.setData(self.time, self.data, pen=self.pen)
+                    self.bpm_edit.setText(vals[1])
+                    self.prev_mpu = int(vals[2])
+                except ValueError:
+                    pass
 
 class Node:
     def __init__(self, data=None):
@@ -317,8 +323,8 @@ class myQueue:
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    #plotter = SerialPlotter(port='COM14', baudrate=115200)
-    plotter = SerialPlotter(port='/dev/ttyS0', baudrate=115200)
+    plotter = SerialPlotter(port='COM14', baudrate=115200)
+    #plotter = SerialPlotter(port='/dev/ttyS0', baudrate=115200)
     plotter.show()
 
     sys.exit(app.exec_())
