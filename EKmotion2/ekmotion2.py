@@ -323,8 +323,8 @@ class myQueue:
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    plotter = SerialPlotter(port='COM14', baudrate=115200)
-    #plotter = SerialPlotter(port='/dev/ttyS0', baudrate=115200)
+    #plotter = SerialPlotter(port='COM14', baudrate=115200)
+    plotter = SerialPlotter(port='/dev/ttyS0', baudrate=115200)
     plotter.show()
 
     sys.exit(app.exec_())
