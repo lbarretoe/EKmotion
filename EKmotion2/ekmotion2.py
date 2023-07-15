@@ -100,7 +100,7 @@ class SerialPlotter(QtWidgets.QMainWindow):
         self.buffer_time = np.zeros(self.plot_length)
         self.buffer_index = 0
 
-        self.timer.start(50)
+        self.timer.start(3)
 
     def mail_dialog(self):
         self.mail_d = MailDialog()
